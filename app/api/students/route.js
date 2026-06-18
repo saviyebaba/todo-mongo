@@ -22,21 +22,7 @@ export async function POST(request) {
   return Response.json(student);
 }
 
-export async function DELETE(request) {
-  await connectDB();
-
-  const { searchParams } = new URL(request.url);
-
-  const id = searchParams.get("id");
-
-  await Student.findByIdAndDelete(id);
-
-  return Response.json({
-    message: "Supprimé",
-  });
-}
 export async function PUT(request) {
-
   await connectDB();
 
   const body = await request.json();
@@ -51,4 +37,18 @@ export async function PUT(request) {
   );
 
   return Response.json(student);
+}
+
+export async function DELETE(request) {
+  await connectDB();
+
+  const { searchParams } = new URL(request.url);
+
+  const id = searchParams.get("id");
+
+  await Student.findByIdAndDelete(id);
+
+  return Response.json({
+    message: "Supprimé",
+  });
 }

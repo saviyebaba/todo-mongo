@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,6 +6,7 @@ export default function Home() {
   const [nom, setNom] = useState("");
   const [classe, setClasse] = useState("");
   const [students, setStudents] = useState([]);
+  const [editId, setEditId] = useState(null);
 
   async function loadStudents() {
     try {
@@ -20,12 +20,12 @@ export default function Home() {
 
   async function addStudent() {
     if (!nom || !classe) {
-      alert("Remplissez les champs");
+      alert("Veuillez remplir tous les champs");
       return;
     }
 
     try {
-      const res = await fetch("/api/students", {
+      await fetch("/api/students", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -36,16 +36,55 @@ export default function Home() {
         }),
       });
 
-      if (res.ok) {
-        setNom("");
-        setClasse("");
-        loadStudents();
-      }
+      setNom("");
+      setClasse("");
+
+      loadStudents();
     } catch (error) {
       console.log(error);
     }
   }
 
+ function editStudent(student) {
+  setNom(student.nom);
+  setClasse(student.classe);
+  setEditId(student._id);
+}
+async function addStudent() {
+  if (!nom || !classe) return;
+
+  if (editId) {
+    await fetch("/api/students", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: editId,
+        nom,
+        classe,
+      }),
+    });
+
+    setEditId(null);
+  } else {
+    await fetch("/api/students", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        nom,
+        classe,
+      }),
+    });
+  }
+
+  setNom("");
+  setClasse("");
+
+  loadStudents();
+}
   async function deleteStudent(id) {
     try {
       await fetch(`/api/students?id=${id}`, {
@@ -63,84 +102,62 @@ export default function Home() {
   }, []);
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Gestion des Étudiants</h1>
+    <div className="container">
+      <h1 className="title">
+        Gestion des Étudiants
+      </h1>
 
-      <div style={{ marginBottom: "20px" }}>
+      <div className="form">
         <input
-          type="text"
+          className="input"
           placeholder="Nom"
           value={nom}
           onChange={(e) => setNom(e.target.value)}
         />
 
         <input
-          type="text"
+          className="input"
           placeholder="Classe"
           value={classe}
           onChange={(e) => setClasse(e.target.value)}
-          style={{ marginLeft: "10px" }}
         />
 
         <button
+          className="add-btn"
           onClick={addStudent}
-          style={{ marginLeft: "10px" }}
         >
           Ajouter
         </button>
       </div>
 
-      <hr />
-
       {students.map((student) => (
         <div
           key={student._id}
-          style={{
-            display: "flex",
-            gap: "10px",
-            marginTop: "10px",
-          }}
+          className="student-card"
         >
           <span>
             {student.nom} - {student.classe}
           </span>
 
+          <div className="actions">
           <button
-            onClick={() => deleteStudent(student._id)}
-          >
-            Supprimer
-          </button>
-          <button
-  onClick={() => updateStudent(student._id)}
+  className="edit-btn"
+  onClick={() => editStudent(student)}
 >
   Modifier
 </button>
 
-
+            <button
+              className="delete-btn"
+              onClick={() =>
+                deleteStudent(student._id)
+              }
+            >
+              Supprimer
+            </button>
+          </div>
         </div>
       ))}
     </div>
   );
-}
-async function updateStudent(id) {
-
-  const nouveauNom = prompt("Nouveau nom");
-
-  const nouvelleClasse = prompt("Nouvelle classe");
-
-  if (!nouveauNom || !nouvelleClasse) return;
-
-  await fetch("/api/students", {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      id,
-      nom: nouveauNom,
-      classe: nouvelleClasse,
-    }),
-  });
-
-  loadStudents();
 }
